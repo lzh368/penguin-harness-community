@@ -1,0 +1,18 @@
+# Shared RSI Community — Task Board Registry
+# Every task is created from a GitHub Issue by an RSI Community Committee member first,
+# and synced by `rsi_community_steward` (per RFC-0006):
+# - Contributors claim a task by replying `/claim` directly under that task's GitHub Issue.
+
+version: 1
+max_concurrent_claims_per_user: 2
+claim_grace_period_days: 30
+default_exp: 50
+
+target_repositories:
+  - "https://github.com/Prism-Shadow/penguin-harness"
+  - "https://github.com/Prism-Shadow/penguin-harness-community"
+  - "https://github.com/Prism-Shadow/penguin-harness-benchmark"
+  - "https://github.com/Prism-Shadow/penguin-harness-plugins"
+  - "https://github.com/Prism-Shadow/awesome-rsi"
+
+tasks:
