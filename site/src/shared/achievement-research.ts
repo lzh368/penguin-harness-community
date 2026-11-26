@@ -20,6 +20,11 @@ type TopicDefinition = {
   phases?: Phase[];
 };
 type ProjectDefinition = TopicDefinition & { followUp?: TopicDefinition };
+type VersionDefinition = {
+  id: "v1" | "v2";
+  label: Text;
+  projects: Partial<Record<RouteId, ProjectDefinition[]>>;
+};
 type Achievement = "unlocked" | "locked";
 
 const routeTitles = {
@@ -1194,7 +1199,7 @@ const appDigitalSecretaryPoster = buildAppTopic({
   },
 });
 
-/* ---------- Routes ---------- */
+/* ---------- Versions ---------- */
 const publishedAppProjects = [
   appSuperAgentTaskTree,
   appOverleafPaper,
@@ -1204,22 +1209,64 @@ const publishedAppProjects = [
   appHealthAssistant,
 ];
 
-const routeProjects: Record<RouteId, ProjectDefinition[]> = {
-  infra: [autoResearch, ascendInference, qwenPostTraining, solExecBenchErnie],
-  "auto-bench": [turingBenchWritingRealism],
-  agent: [contextCompactionHandoff, personalAgentComputerUse, companyModeCoordination],
-  platform: [
-    { ...gdpevoSkillEvolution, followUp: gdpevoOntologyTransfer },
-    multiDomainHarnessComparison,
-    metaHarnessReproduction,
-  ],
-  apps: publishedAppProjects,
-};
+const versions: VersionDefinition[] = [
+  {
+    id: "v1",
+    label: { zh: "V1 · 精简版", en: "V1 · Curated" },
+    projects: {
+      infra: [autoResearch, ascendInference, qwenPostTraining, solExecBenchErnie],
+      "auto-bench": [turingBenchWritingRealism],
+      agent: [contextCompactionHandoff, personalAgentComputerUse, companyModeCoordination],
+      platform: [
+        { ...gdpevoSkillEvolution, followUp: gdpevoOntologyTransfer },
+        multiDomainHarnessComparison,
+        metaHarnessReproduction,
+      ],
+      apps: publishedAppProjects,
+    },
+  },
+  {
+    id: "v2",
+    label: { zh: "V2 · 完整版", en: "V2 · Full" },
+    projects: {
+      infra: [
+        autoResearch,
+        speedrun,
+        ascendInference,
+        qwenPostTraining,
+        solExecBenchErnie,
+      ],
+      "auto-bench": [
+        turingBenchWritingRealism,
+        autoBenchJudgeAlignment,
+      ],
+      agent: [
+        contextCompactionHandoff,
+        personalAgentComputerUse,
+        companyModeCoordination,
+        agentBlockerHonesty,
+      ],
+      platform: [
+        { ...gdpevoSkillEvolution, followUp: gdpevoOntologyTransfer },
+        multiDomainHarnessComparison,
+        metaHarnessReproduction,
+        hleDiamondSkillOpt,
+        rrsiCrossBenchTransfer,
+      ],
+      apps: [
+        ...publishedAppProjects,
+        appDigitalSecretaryPoster,
+      ],
+    },
+  },
+];
 
 const empty = { zh: "待填写", en: "To be filled in" };
 const blankPhases = trainingPhases.map(({ label }) => ({ label, work: empty, evidence: empty }));
 
-export function researchRoutes(quests: QuestItem[], locale: Locale) {
+export const achievementVersions = versions.map(({ id, label }) => ({ id, label }));
+
+export function researchVersions(quests: QuestItem[], locale: Locale) {
   const byIssue = new Map(quests.map((q) => [q.issueNumber, q]));
   const stageOrder: Record<StageState, number> = { done: 0, active: 1, open: 2, planned: 3 };
   const labelOrder = new Map<Text, number>([
@@ -1279,20 +1326,25 @@ export function researchRoutes(quests: QuestItem[], locale: Locale) {
       stages,
     };
   };
-  return (Object.keys(routeTitles) as RouteId[]).map((id) => ({
-    id,
-    title: resolveText(routeTitles[id], locale),
-    projects: (routeProjects[id] ?? []).map((project) => {
-      const resolved = topicDetails(project);
-      return {
-        ...resolved,
-        followUp: project.followUp
-          ? topicDetails(project.followUp, resolved.completed ? "unlocked" : "locked")
-          : undefined,
-      };
-    }),
+  return versions.map((version) => ({
+    id: version.id,
+    label: resolveText(version.label, locale),
+    routes: (Object.keys(routeTitles) as RouteId[]).map((id) => ({
+      id,
+      title: resolveText(routeTitles[id], locale),
+      projects: (version.projects[id] ?? []).map((project) => {
+        const resolved = topicDetails(project);
+        return {
+          ...resolved,
+          followUp: project.followUp
+            ? topicDetails(project.followUp, resolved.completed ? "unlocked" : "locked")
+            : undefined,
+        };
+      }),
+    })),
   }));
 }
 
-export type ResearchRoute = ReturnType<typeof researchRoutes>[number];
+export type ResearchVersion = ReturnType<typeof researchVersions>[number];
+export type ResearchRoute = ResearchVersion["routes"][number];
 export type ResearchProject = Omit<ResearchRoute["projects"][number], "followUp">;

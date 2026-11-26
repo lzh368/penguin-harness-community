@@ -243,8 +243,10 @@ export function initAtlas(root: HTMLDetailsElement) {
     if (root.hidden) return;
     const hash = location.hash.slice(1);
     let heading = document.getElementById(hash);
-    if (!heading && hash.startsWith("atlas-infra-")) {
-      heading = document.getElementById("atlas-heading-infra");
+    if (!heading && root.dataset.atlasVersion === "v1") {
+      const legacy = hash.match(/^atlas-heading-(infra|auto-bench|agent|platform|apps)$/);
+      if (legacy) heading = document.getElementById(`atlas-v1-heading-${legacy[1]}`);
+      else if (hash.startsWith("atlas-infra-")) heading = document.getElementById("atlas-v1-heading-infra");
     }
     const branch = heading?.matches("[data-domain-node] h3") ? heading.closest<HTMLElement>("[data-domain]") : null;
     if (!heading || !branch || !root.contains(heading)) return;
@@ -262,5 +264,6 @@ export function initAtlas(root: HTMLDetailsElement) {
   }
   window.addEventListener("hashchange", revealLinkedRoute);
   window.addEventListener("pageshow", revealLinkedRoute);
+  root.addEventListener("atlas-version-change", () => { refresh(); revealLinkedRoute(); });
   if (document.readyState === "complete") revealLinkedRoute();
 }
